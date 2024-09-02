@@ -220,6 +220,11 @@
   dependencies:
     undici-types "~6.19.2"
 
+"@types/pegjs@^0.10.0":
+  version "0.10.6"
+  resolved "https://registry.yarnpkg.com/@types/pegjs/-/pegjs-0.10.6.tgz#bc20fc4809fed4cddab8d0dbee0e568803741a82"
+  integrity sha512-eLYXDbZWXh2uxf+w8sXS8d6KSoXTswfps6fvCUuVAGN8eRpfe7h9eSRydxiSJvo9Bf+GzifsDOr9TMQlmJdmkw==
+
 "@types/prop-types@*":
   version "15.7.12"
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.12.tgz#12bb1e2be27293c1406acb6af1c3f3a1481d98c6"
@@ -485,6 +490,11 @@ balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
+
+big-integer@^1.6.48:
+  version "1.6.52"
+  resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.52.tgz#60a887f3047614a8e1bffe5d7173490a97dc8c85"
+  integrity sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==
 
 binary-extensions@^2.0.0:
   version "2.3.0"
@@ -1868,6 +1878,14 @@ next@14.2.7:
     "@next/swc-win32-arm64-msvc" "14.2.7"
     "@next/swc-win32-ia32-msvc" "14.2.7"
     "@next/swc-win32-x64-msvc" "14.2.7"
+
+node-sql-parser@^5.3.2:
+  version "5.3.2"
+  resolved "https://registry.yarnpkg.com/node-sql-parser/-/node-sql-parser-5.3.2.tgz#23d10cbe7fabdd824c543b3e35a26488c3c0720f"
+  integrity sha512-GW5KZeexD2fHfSmsOz/cYqlGCfO19n0RrwP5I9JfI3ufeffxnWTPczuM5slH4sgKoHrgIXSUKkcEIdNGs11XYA==
+  dependencies:
+    "@types/pegjs" "^0.10.0"
+    big-integer "^1.6.48"
 
 normalize-path@^3.0.0, normalize-path@~3.0.0:
   version "3.0.0"
