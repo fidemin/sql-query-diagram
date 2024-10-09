@@ -3,7 +3,7 @@
 "use client";
 import { useState, ChangeEvent } from "react";
 import { Parser } from 'node-sql-parser'; 
-import { sqlToGraph } from './core/sqlToGraph'; 
+import { sqlToGraphNodes } from './core/sqlToGraph'; 
 
 export default function Home() {
   const initSql = `WITH cte1 AS (
@@ -33,8 +33,8 @@ export default function Home() {
 
   const handleButtonClick = () => {
     setSqlQuery(inputValue);
-    const graph = sqlToGraph(inputValue);
-    console.log(graph);
+    const nodes = sqlToGraphNodes(inputValue);
+    console.log(nodes);
   };
 
   return (
