@@ -1,6 +1,7 @@
 
 import { Parser } from 'node-sql-parser'; // Import the SQL parser
 import { v4 as uuidv4 } from 'uuid';
+import { GraphNode } from '../types/graphNode';
 
 
 let myuuid = uuidv4();
@@ -16,7 +17,7 @@ const filterTables = (tableList: string[], cteSet: Set<string>) => {
 }
 
 // Function to parse SQL and return the AST and any potential `WITH` expressions
-export const sqlToGraphNodes = (sqlQuery: string) => {
+export const sqlToGraphNodes = (sqlQuery: string) : GraphNode[] => {
   const parser = new Parser();
 
   try {
@@ -27,10 +28,10 @@ export const sqlToGraphNodes = (sqlQuery: string) => {
     const withsValues: any[] = Object.values(withs);
 
     const cteSet = new Set<string>();
-    const nodes: any[] = [];
+    const nodes: GraphNode[] = [];
 
     for (const withItem of withsValues) {
-      console.log("withItem:", withItem);
+      // console.log("withItem:", withItem);
       
       const cteName = withItem.name.value;
       const dependsOn = [];
@@ -39,22 +40,23 @@ export const sqlToGraphNodes = (sqlQuery: string) => {
       const tableList = filterTables(withItem.stmt.tableList, cteSet); 
       const sql = parser.sqlify(withItem.stmt.ast);
 
-      const node: any = {};
-      node.key = cteName;
-      node.sql = sql;
-      node.tables = tableList;
-      console.log("node:", node);
+      const node: GraphNode = {
+        key: cteName,
+        sql: sql,
+        tables: tableList
+      }
+        
+      // console.log("node:", node);
       nodes.push(node);
     }
 
-    const nodeWithoutCte: any = {
+    const nodeWithoutCte: GraphNode = {
+      key: uuidv4(),
+      sql: parser.sqlify(ast),
+      tables: ast.from.map((table: any) => table.table)
+
     };
     
-    // uuid key for nodeWithoutCte
-    nodeWithoutCte.key = uuidv4();
-    nodeWithoutCte.sql = parser.sqlify(ast);
-    nodeWithoutCte.tables = ast.from.map((table: any) => table.table);
-    console.log("nodeWithoutCte:", nodeWithoutCte);
     nodes.push(nodeWithoutCte);
 
     return nodes;

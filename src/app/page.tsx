@@ -4,6 +4,8 @@
 import { useState, ChangeEvent } from "react";
 import { Parser } from 'node-sql-parser'; 
 import { sqlToGraphNodes } from './core/sqlToGraph'; 
+import Graph from './graph';
+import { GraphNode } from "./types/graphNode";
 
 export default function Home() {
   const initSql = `WITH cte1 AS (
@@ -24,6 +26,7 @@ export default function Home() {
   const [sqlQuery, setSqlQuery] = useState<string>('');
 
   const [parsedSQL, setParsedSQL] = useState<any>(null);
+  const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
 
   const parser = new Parser();
 
@@ -34,7 +37,7 @@ export default function Home() {
   const handleButtonClick = () => {
     setSqlQuery(inputValue);
     const nodes = sqlToGraphNodes(inputValue);
-    console.log(nodes);
+    setGraphNodes(nodes);
   };
 
   return (
@@ -64,10 +67,9 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Placeholder for future drawing area */}
+        {/* Graph Drawing Area */}
         <div className="w-full lg:flex-1 border-2 border-dashed border-gray-300 rounded-lg bg-white dark:bg-neutral-800/30 flex items-center justify-center text-gray-400 dark:text-gray-600">
-          {/* Placeholder for any future visualizations */}
-          Drawing Area (Placeholder)
+            <Graph graphNodes={graphNodes} />
         </div>
       </div>
 
