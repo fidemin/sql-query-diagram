@@ -2,8 +2,8 @@
 "use strict";
 "use client";
 import { useState, ChangeEvent } from "react";
-import { Parser } from 'node-sql-parser'; 
-import { sqlToGraphNodes } from './core/sqlToGraph'; 
+import { Parser } from 'node-sql-parser';
+import { sqlToGraphNodes } from './core/sqlToGraph';
 import Graph from './graph';
 import { GraphNode } from "./types/graphNode";
 
@@ -22,7 +22,52 @@ export default function Home() {
     )
     SELECT * FROM final_result`;
 
-  const [inputValue, setInputValue] = useState<string>(initSql);
+  const initSql2 = `WITH cte1 AS (
+    SELECT a, b, COUNT(*) OVER (PARTITION BY a) AS count_a
+    FROM mytable
+),
+cte2 AS (
+    SELECT c, d, ROW_NUMBER() OVER (PARTITION BY c ORDER BY d DESC) AS row_num
+    FROM table2
+    WHERE d > 10
+),
+cte3 AS (
+    SELECT cte1.a, cte2.c, cte1.b
+    FROM cte1
+    INNER JOIN cte2 ON cte1.b = cte2.c
+    WHERE cte1.count_a > 1
+),
+cte4 AS (
+    SELECT a, b, c, SUM(b) OVER (PARTITION BY a) AS sum_b
+    FROM (
+        SELECT cte3.a, cte3.b, cte3.c
+        FROM cte3
+        WHERE cte3.c IS NOT NULL
+    ) AS filtered_cte3
+),
+cte5 AS (
+    SELECT cte4.a, cte4.c,
+           CASE 
+               WHEN cte4.sum_b > 100 THEN 'High'
+               ELSE 'Low'
+           END AS category
+    FROM cte4
+),
+final_result AS (
+    SELECT cte1.a, cte5.c, cte5.category, COALESCE(cte1.b, 0) AS b
+    FROM cte1
+    LEFT JOIN cte5 ON cte1.a = cte5.a
+    WHERE cte1.count_a > 2
+    UNION ALL
+    SELECT a, c, category, b
+    FROM cte5
+    WHERE category = 'High'
+)
+SELECT *
+FROM final_result
+ORDER BY a, c`;
+
+  const [inputValue, setInputValue] = useState<string>(initSql2);
   const [sqlQuery, setSqlQuery] = useState<string>('');
 
   const [parsedSQL, setParsedSQL] = useState<any>(null);
@@ -30,7 +75,7 @@ export default function Home() {
 
   const parser = new Parser();
 
-  const handleQueryChange = (e:  ChangeEvent<HTMLTextAreaElement>) => {
+  const handleQueryChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
   };
 
@@ -66,11 +111,11 @@ export default function Home() {
             Submit Query
           </button>
         </div>
+      </div>
 
-        {/* Graph Drawing Area */}
-        <div className="w-full lg:flex-1 border-2 border-dashed border-gray-300 rounded-lg bg-white dark:bg-neutral-800/30 flex items-center justify-center text-gray-400 dark:text-gray-600">
-            <Graph graphNodes={graphNodes} />
-        </div>
+      {/* Graph Drawing Area */}
+      <div className="w-full lg:flex-1 border-2 border-dashed border-gray-300 rounded-lg bg-white dark:bg-neutral-800/30 flex items-center justify-center text-gray-400 dark:text-gray-600">
+        <Graph graphNodes={graphNodes} />
       </div>
 
       {/* Display the SQL query below the textarea */}

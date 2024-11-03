@@ -1,10 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import dagre from '@dagrejs/dagre';
 import { GraphNode } from './types/graphNode';
-import { table } from 'console';
 
 const setArrowMarker = (svg: SVGSVGElement) => {
-    // Define arrow marker for edges
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
     marker.setAttribute('id', 'arrow');
@@ -15,14 +13,13 @@ const setArrowMarker = (svg: SVGSVGElement) => {
     marker.setAttribute('markerHeight', '6');
     marker.setAttribute('orient', 'auto-start-reverse');
 
-    // Create the actual arrow (a small triangle)
     const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     arrowPath.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
     arrowPath.setAttribute('fill', 'white');
     marker.appendChild(arrowPath);
     defs.appendChild(marker);
     svg.appendChild(defs);
-}
+};
 
 interface GraphProps {
     graphNodes: GraphNode[];
@@ -31,41 +28,31 @@ interface GraphProps {
 const Graph: React.FC<GraphProps> = ({ graphNodes }) => {
     const svgRef = useRef<SVGSVGElement>(null);
 
+    const [dragging, setDragging] = useState(false);
+    const [transform, setTransform] = useState({ x: 0, y: 0 });
+    const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
+
     useEffect(() => {
         if (graphNodes.length === 0) return;
 
-        // Create a new directed graph
         const g = new dagre.graphlib.Graph();
-
-        // Set an object for the graph label
         g.setGraph({});
-
-        // Default to assigning a new object as a label for each edge.
         g.setDefaultEdgeLabel(() => ({}));
 
         const graphKeySet = new Set<string>();
-        graphNodes.forEach((node) => {
-            graphKeySet.add(node.key);
-        });
-        console.log("graphKeySet: ", graphKeySet);
+        graphNodes.forEach((node) => graphKeySet.add(node.key));
 
         graphNodes.forEach((node) => {
-            console.log("node: ", node);
-            g.setNode(node.key, { label: node.key, width: 100, height: 50 });
-
+            g.setNode(node.key, { label: node.key, sql: node.sql, width: 300, height: 150 });
             node.tables.forEach((table) => {
-                if (graphKeySet.has(table)) {
-                    g.setEdge(table, node.key);
-                }
+                if (graphKeySet.has(table)) g.setEdge(table, node.key);
             });
         });
 
         dagre.layout(g);
 
-        // Draw the graph in SVG
         const svg = svgRef.current;
         if (svg) {
-            // Clear the current SVG
             while (svg.firstChild) {
                 svg.removeChild(svg.firstChild);
             }
@@ -74,10 +61,12 @@ const Graph: React.FC<GraphProps> = ({ graphNodes }) => {
             const svgGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             svg.appendChild(svgGroup);
 
+            svgGroup.setAttribute('transform', `translate(${transform.x}, ${transform.y})`);
+
             g.nodes().forEach((node) => {
                 const n = g.node(node);
                 const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                rect.setAttribute('x', (n.x - n.width / 2).toString()); // Adjust to center the rectangle
+                rect.setAttribute('x', (n.x - n.width / 2).toString());
                 rect.setAttribute('y', (n.y - n.height / 2).toString());
                 rect.setAttribute('width', n.width.toString());
                 rect.setAttribute('height', n.height.toString());
@@ -86,17 +75,23 @@ const Graph: React.FC<GraphProps> = ({ graphNodes }) => {
                 svgGroup.appendChild(rect);
 
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', (n.x - 5).toString());
-                text.setAttribute('y', (n.y + 5).toString());
+                text.setAttribute('x', n.x.toString());
+                text.setAttribute('y', (n.y - 20).toString());
                 text.setAttribute('text-anchor', 'middle');
                 text.textContent = n.label ?? '';
                 svgGroup.appendChild(text);
+
+                const sqlText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sqlText.setAttribute('x', n.x.toString());
+                sqlText.setAttribute('y', (n.y + 20).toString());
+                sqlText.setAttribute('text-anchor', 'middle');
+                sqlText.setAttribute('fill', 'gray');
+                sqlText.textContent = n.sql ?? '';
+                svgGroup.appendChild(sqlText);
             });
 
             g.edges().forEach((edge) => {
                 const e = g.edge(edge);
-
-                // There are two lines for each edge
                 for (let i = 0; i < e.points.length - 1; i++) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', e.points[i].x.toString());
@@ -109,12 +104,40 @@ const Graph: React.FC<GraphProps> = ({ graphNodes }) => {
                     }
                     svgGroup.appendChild(line);
                 }
-
             });
         }
-    }, [graphNodes]);
+    }, [graphNodes, transform]);
 
-    return <svg ref={svgRef} width="500" height="400" />;
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setDragging(true);
+        setStartPoint({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!dragging) return;
+        const dx = e.clientX - startPoint.x;
+        const dy = e.clientY - startPoint.y;
+        setTransform((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+        setStartPoint({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+        setDragging(false);
+    };
+
+    return (
+        <svg
+            ref={svgRef}
+            width="1500"
+            height="1000"
+            // viewBox="0 0 2000 1500"
+            preserveAspectRatio="xMidYMid meet"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            style={{ cursor: dragging ? 'grabbing' : 'grab' }}
+        />
+    );
 };
 
 export default Graph;

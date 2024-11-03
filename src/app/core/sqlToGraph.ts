@@ -21,8 +21,16 @@ export const sqlToGraphNodes = (sqlQuery: string) : GraphNode[] => {
   const parser = new Parser();
 
   try {
-    const ast: any = parser.astify(sqlQuery);
-    console.log("any: ", ast);
+    let ast: any = parser.astify(sqlQuery);
+    console.log("ast: ", ast);
+
+    // NOTE: If parser returns a list, first one is ast. 
+    //   I don't know why it sometimes returns a list.
+    if (0 in ast) {
+      ast = ast[0];
+    }
+
+
     const withs = ast.with || [];
     delete ast.with;
     const withsValues: any[] = Object.values(withs);
@@ -54,7 +62,6 @@ export const sqlToGraphNodes = (sqlQuery: string) : GraphNode[] => {
       key: uuidv4(),
       sql: parser.sqlify(ast),
       tables: ast.from.map((table: any) => table.table)
-
     };
     
     nodes.push(nodeWithoutCte);
